@@ -203,6 +203,9 @@ def submit_word():
         "score": score,
         "total_score": user['score'],
         "tokens": user['tokens'],
+        "highest_score": user['highest_score'],
+        "best_word": user['best_word'],
+        "longest_word": user['longest_word'],
         "achievements": user['achievements'],
         "new_achievements": new_achievements,
         "dictionary": user['dictionary'],
@@ -210,6 +213,47 @@ def submit_word():
     }
     print("Response Payload:", result)
     return jsonify(result)
+
+
+@app.route('/fast-forward-day', methods=['POST'])
+def fast_forward_day():
+    username = request.json.get('username')
+    user = users.get(username)
+    if not user:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    current_date = datetime.strptime(user['date'], '%Y-%m-%d').date()
+    next_day = current_date + timedelta(days=1)
+    next_key = next_day.strftime('%Y-%m-%d')
+
+    user['letters'] = get_seeded_letters(next_key)
+    user['date'] = next_key
+    user['last_submission'] = None
+
+    if user['last_login']:
+        last_login = datetime.strptime(user['last_login'], '%Y-%m-%d').date()
+        if next_day - last_login == timedelta(days=1):
+            user['current_streak'] += 1
+        elif next_day - last_login > timedelta(days=1):
+            user['current_streak'] = 1
+    else:
+        user['current_streak'] = 1
+
+    user['longest_streak'] = max(user['longest_streak'], user['current_streak'])
+    user['last_login'] = next_key
+    user['login_days'].add(next_key)
+
+    new_achievements = []
+    if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
+        user['achievements'].append("Logged in 3 days in a row")
+        new_achievements.append("Logged in 3 days in a row")
+
+    return jsonify({
+        "status": "success",
+        "letters": user['letters'],
+        "date": next_key,
+        "new_achievements": new_achievements
+    })
 
 
 if __name__ == '__main__':

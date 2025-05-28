@@ -314,6 +314,7 @@
     </div>
   </header>
   <button id="signin-btn" onclick="openLoginModal()">Sign In</button>
+  <button id="fast-forward-btn" onclick="fastForwardDay()" style="display:none; position: fixed; top: 50px; right: 10px; z-index:20;">Fast Forward One Day</button>
 
   <nav id="drawer">
       <button id="drawer-close" class="close-btn">&times;</button>
@@ -388,6 +389,7 @@
       'Q':10,'R':1,'S':1,'T':1,'U':1,'V':4,'W':4,'X':8,
       'Y':4,'Z':10
     };
+    const devMode = true;
 
       let username = localStorage.getItem('username');
       if (!username) {
@@ -404,6 +406,9 @@
     document.addEventListener('DOMContentLoaded', () => {
       if(!localStorage.getItem('onboardingComplete')) {
         document.getElementById('onboarding-modal').style.display = 'flex';
+      }
+      if(devMode) {
+        document.getElementById('fast-forward-btn').style.display = 'block';
       }
     });
 
@@ -588,7 +593,7 @@
         });
     }
 
-    function submitWord() {
+  function submitWord() {
       const word = document.getElementById('word').value;
       fetch('/submit-word', {
         method:'POST',
@@ -601,6 +606,8 @@
             document.getElementById('token-display').innerText = data.tokens;
             document.getElementById('daily-score').innerText = data.score;
             updateLocalStats({tokens: data.tokens, score: data.total_score});
+            document.getElementById('best-word').innerText = data.highest_score ? `${data.best_word} (+${data.highest_score})` : '–';
+            document.getElementById('longest-word').innerText = data.longest_word || '–';
             if(data.new_achievements) {
               data.new_achievements.forEach(a => {
                 achievements.push(a);
@@ -614,6 +621,25 @@
           showMessage(data.message);
         }
       });
+    }
+
+    function fastForwardDay() {
+      fetch('/fast-forward-day', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username})
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') {
+            if(data.new_achievements) {
+              data.new_achievements.forEach(a => showAchievement(a));
+            }
+            getData();
+          } else {
+            showMessage(data.message || 'Error');
+          }
+        });
     }
 
     loadStatsFromLocal();
