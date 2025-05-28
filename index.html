@@ -78,6 +78,14 @@
       font-size: 1em;
       border-bottom: 1px solid #333;
     }
+    #drawer button.close-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: auto;
+      border-bottom: none;
+      font-size: 1.2em;
+    }
     #drawer button:hover {
       background: #009688;
     }
@@ -202,7 +210,8 @@
   </header>
   <button id="signin-btn" onclick="openLoginModal()">Sign In</button>
 
-    <nav id="drawer">
+  <nav id="drawer">
+      <button id="drawer-close" class="close-btn">&times;</button>
       <button onclick="togglePanel('stats')">Show Stats</button>
       <button onclick="togglePanel('dictionary')">My Dictionary</button>
       <button onclick="togglePanel('achievements')">Achievements</button>
@@ -224,7 +233,8 @@
     </div>
       <div id="dictionary">
         <h3>MY DICTIONARY</h3>
-        <p>Your words will appear here.</p>
+        <ul id="dictionary-list"></ul>
+        <p id="dictionary-total"></p>
       </div>
       <div id="achievements">
         <h3>ACHIEVEMENTS</h3>
@@ -278,6 +288,15 @@
     document.getElementById('menu-toggle').addEventListener('click', () => {
       document.getElementById('drawer').classList.toggle('open');
     });
+    document.getElementById('drawer-close').addEventListener('click', () => {
+      document.getElementById('drawer').classList.remove('open');
+    });
+    document.addEventListener('click', (e) => {
+      const drawer = document.getElementById('drawer');
+      if(drawer.classList.contains('open') && !drawer.contains(e.target) && e.target !== document.getElementById('menu-toggle')) {
+        drawer.classList.remove('open');
+      }
+    });
 
       function updateLocalStats(data) {
         if (!data) return;
@@ -302,6 +321,18 @@
           li.textContent = a;
           list.appendChild(li);
         });
+      }
+
+      function updateDictionaryList(words, total) {
+        const list = document.getElementById('dictionary-list');
+        const totalEl = document.getElementById('dictionary-total');
+        list.innerHTML = '';
+        words.forEach(entry => {
+          const li = document.createElement('li');
+          li.textContent = `${entry.word} (+${entry.score})`;
+          list.appendChild(li);
+        });
+        totalEl.innerText = words.length ? `Total Score: ${total}` : '';
       }
 
     let selectedTiles = [];
@@ -361,6 +392,7 @@
           document.getElementById('longest-word').innerText = data.longest_word || '–';
           document.getElementById('current-streak').innerText = data.current_streak || 0;
           document.getElementById('longest-streak').innerText = data.longest_streak || 0;
+          updateDictionaryList(data.dictionary || [], data.dictionary_score || 0);
         });
     }
 
@@ -385,6 +417,7 @@
               });
               updateAchievementsList();
             }
+            updateDictionaryList(data.dictionary || [], data.dictionary_score || 0);
             getData();
           } else {
             document.getElementById('result').innerText = data.message;

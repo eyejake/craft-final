@@ -58,6 +58,7 @@ def login():
         users[username] = {
             'letters': get_seeded_letters(today_key),
             'history': [],
+            'dictionary': [],  # store unique submitted words with scores
             'date': today_key,
             'last_submission': None,
             'tokens': 10,
@@ -117,7 +118,9 @@ def get_letters():
         "longest_word": user['longest_word'],
         "current_streak": user['current_streak'],
         "longest_streak": user['longest_streak'],
-        "achievements": user['achievements']
+        "achievements": user['achievements'],
+        "dictionary": user['dictionary'],
+        "dictionary_score": sum(entry['score'] for entry in user['dictionary'])
     })
 
 
@@ -150,6 +153,8 @@ def submit_word():
 
     score = calculate_word_score(word)
     user['history'].append(word)
+    if not any(entry['word'] == word for entry in user['dictionary']):
+        user['dictionary'].append({"word": word, "score": score})
     user['last_submission'] = today_key
     user['tokens'] += 1
     if len(word) == LETTER_POOL_SIZE:
@@ -183,7 +188,9 @@ def submit_word():
         "score": score,
         "tokens": user['tokens'],
         "achievements": user['achievements'],
-        "new_achievements": new_achievements
+        "new_achievements": new_achievements,
+        "dictionary": user['dictionary'],
+        "dictionary_score": sum(entry['score'] for entry in user['dictionary'])
     }
     print("Response Payload:", result)
     return jsonify(result)
