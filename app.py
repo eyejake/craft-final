@@ -67,7 +67,8 @@ def login():
             'current_streak': 0,
             'longest_streak': 0,
             'last_login': None,
-            'login_days': set()
+            'login_days': set(),
+            'achievements': []
         }
     user = users[username]
     if user['date'] != today_key:
@@ -88,7 +89,17 @@ def login():
     user['last_login'] = today.strftime('%Y-%m-%d')
     user['login_days'].add(today_key)
 
-    return jsonify({"status": "success", "username": username})
+    new_achievements = []
+    if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
+        user['achievements'].append("Logged in 3 days in a row")
+        new_achievements.append("Logged in 3 days in a row")
+
+    return jsonify({
+        "status": "success",
+        "username": username,
+        "achievements": user['achievements'],
+        "new_achievements": new_achievements
+    })
 
 
 @app.route('/get-letters', methods=['GET'])
@@ -105,7 +116,8 @@ def get_letters():
         "best_word": max(user['history'], key=lambda w: calculate_word_score(w), default=""),
         "longest_word": user['longest_word'],
         "current_streak": user['current_streak'],
-        "longest_streak": user['longest_streak']
+        "longest_streak": user['longest_streak'],
+        "achievements": user['achievements']
     })
 
 
@@ -122,6 +134,9 @@ def submit_word():
 
     if user.get('last_submission') == today_key:
         return jsonify({"status": "fail", "message": "You've already submitted a word today."})
+
+    new_achievements = []
+    first_word = len(user['history']) == 0
 
     letters_copy = user['letters'][:]
     for char in word:
@@ -146,6 +161,16 @@ def submit_word():
     if len(word) > len(user['longest_word']):
         user['longest_word'] = word
 
+    if first_word and "First word submitted" not in user['achievements']:
+        user['achievements'].append("First word submitted")
+        new_achievements.append("First word submitted")
+    if score >= 10 and "Scored 10+ points in a word" not in user['achievements']:
+        user['achievements'].append("Scored 10+ points in a word")
+        new_achievements.append("Scored 10+ points in a word")
+    if len(word) == LETTER_POOL_SIZE and "Used all 7 letters" not in user['achievements']:
+        user['achievements'].append("Used all 7 letters")
+        new_achievements.append("Used all 7 letters")
+
     if len(word) == len(user['letters']):
         user['letters'] = get_seeded_letters(today_key)
     else:
@@ -156,7 +181,9 @@ def submit_word():
         "new_letters": user['letters'],
         "word": word,
         "score": score,
-        "tokens": user['tokens']
+        "tokens": user['tokens'],
+        "achievements": user['achievements'],
+        "new_achievements": new_achievements
     }
     print("Response Payload:", result)
     return jsonify(result)
