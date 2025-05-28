@@ -7,127 +7,150 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #000000;
+      background: #121212;
+      color: #fff;
       margin: 0;
+      padding: 0;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      background: #1f1f1f;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      z-index: 10;
+    }
+
+    #menu-toggle {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    #top-info {
+      display: flex;
+      gap: 10px;
+      font-size: 0.9em;
+    }
+
+    #signin-btn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #009688;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 8px 14px;
+      font-size: 0.9em;
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    #drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 220px;
+      background: #222;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      padding-top: 60px;
+      z-index: 15;
+    }
+    #drawer.open {
+      transform: translateX(0);
+    }
+    #drawer button {
+      display: block;
+      width: 100%;
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      text-align: left;
+      color: #fff;
+      font-size: 1em;
+      border-bottom: 1px solid #333;
+    }
+    #drawer button:hover {
+      background: #009688;
+    }
+
+    #content {
       padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      color: #ffffff;
-    }
-
-    h1 {
-      font-size: 2.2em;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    #token-display {
-      background: #f39c12;
-      color: white;
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-      font-size: 1em;
-    }
-
-    #today-score {
-      font-size: 1.2em;
-      margin: 10px 0;
-    }
-
-    #stats-toggle {
-      margin: 10px;
-      padding: 8px 16px;
-      background-color: #16a085;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 1em;
-      cursor: pointer;
-    }
-
-    #stats {
-      display: none;
-      background-color: #2980b9;
-      padding: 15px;
-      border-radius: 12px;
-      margin-top: 15px;
-      text-align: left;
-      width: 100%;
-      max-width: 350px;
-    }
-
-    #stats h3 {
-      margin: 0 0 10px 0;
-    }
-
-    #stats p {
-      margin: 6px 0;
-      font-size: 1em;
+      margin-top: 20px;
     }
 
     #letters {
-      margin: 20px 0;
       display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
       gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
     }
 
     .tile {
-      background-color: #1abc9c;
+      background: #009688;
+      color: #001f3f;
       padding: 15px 20px;
       border-radius: 10px;
-      font-size: 1.5em;
-      font-weight: bold;
       position: relative;
-      color: #001f3f;
+      font-weight: bold;
+      font-size: 1.4em;
     }
-
     .tile::after {
       content: attr(data-points);
-      font-size: 0.6em;
       position: absolute;
       bottom: 2px;
       right: 6px;
+      font-size: 0.6em;
       color: #333;
     }
 
     input[type="text"] {
       padding: 12px;
-      font-size: 1.2em;
+      font-size: 1.1em;
       border-radius: 8px;
       border: none;
-      margin-top: 10px;
       width: 90%;
-      max-width: 300px;
+      max-width: 280px;
     }
 
-    button {
-      padding: 12px 20px;
+    button.submit {
       margin-top: 15px;
-      background-color: #e67e22;
+      padding: 12px 20px;
+      background: #e67e22;
       border: none;
-      color: white;
-      border-radius: 10px;
+      border-radius: 8px;
+      color: #fff;
       font-size: 1.1em;
       cursor: pointer;
     }
-
-    button:hover {
-      background-color: #d35400;
+    button.submit:hover {
+      background: #cf711f;
     }
 
-    #signin-btn {
-      margin-left: 10px;
-      background-color: #3498db;
+    #stats, #dictionary {
+      display: none;
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 350px;
+      margin-top: 20px;
+    }
+    #stats h3, #dictionary h3 {
+      margin-top: 0;
+      color: #ffa726;
     }
 
     #login-modal {
@@ -140,47 +163,52 @@
       background: rgba(0,0,0,0.8);
       justify-content: center;
       align-items: center;
+      z-index: 30;
     }
-
     #login-modal .modal-content {
-      background: #ffffff;
-      color: #000000;
+      background: #fff;
+      color: #000;
       padding: 20px;
       border-radius: 8px;
       text-align: center;
       max-width: 300px;
     }
-
-    #login-modal button {
-      margin: 4px;
-      padding: 8px 12px;
-    }
-
-    #result {
-      margin-top: 15px;
-      font-size: 1.1em;
-    }
   </style>
 </head>
 <body>
-  <h1><div id="token-display">0</div> WordForge Live <button id="signin-btn" onclick="openLoginModal()">Sign in to sync your stats</button></h1>
+  <header>
+    <button id="menu-toggle">&#9776;</button>
+    <div id="top-info">
+      <div id="token-display">0</div>
+      <div>Pts: <span id="daily-score">0</span></div>
+    </div>
+  </header>
+  <button id="signin-btn" onclick="openLoginModal()">Sign In</button>
 
-  <div id="today-score">Today's Points: <span id="daily-score">0</span></div>
-  <button id="stats-toggle" onclick="toggleStats()">Show Stats</button>
+  <nav id="drawer">
+    <button onclick="togglePanel('stats')">Show Stats</button>
+    <button onclick="togglePanel('dictionary')">My Dictionary</button>
+    <button onclick="alert('Shop coming soon!')">Shop</button>
+  </nav>
 
-  <div id="stats">
-    <h3>STATS</h3>
-    <p>Total Score: <span id="total-score">0</span></p>
-    <p>Best Word: <span id="best-word">–</span></p>
-    <p>Longest Word: <span id="longest-word">–</span></p>
-    <p>Current Streak: <span id="current-streak">0</span></p>
-    <p>Longest Streak: <span id="longest-streak">0</span></p>
+  <div id="content">
+    <div id="letters"></div>
+    <input type="text" id="word" placeholder="Enter a word">
+    <button class="submit" onclick="submitWord()">SUBMIT</button>
+    <div id="result"></div>
+    <div id="stats">
+      <h3>STATS</h3>
+      <p>Total Score: <span id="total-score">0</span></p>
+      <p>Best Word: <span id="best-word">–</span></p>
+      <p>Longest Word: <span id="longest-word">–</span></p>
+      <p>Current Streak: <span id="current-streak">0</span></p>
+      <p>Longest Streak: <span id="longest-streak">0</span></p>
+    </div>
+    <div id="dictionary">
+      <h3>MY DICTIONARY</h3>
+      <p>Your words will appear here.</p>
+    </div>
   </div>
-
-  <div id="letters"></div>
-  <input type="text" id="word" placeholder="Enter a word">
-  <button onclick="submitWord()">SUBMIT</button>
-  <div id="result"></div>
 
   <div id="login-modal">
     <div class="modal-content">
@@ -197,25 +225,34 @@
 
   <script>
     const LETTER_POINTS = {
-      'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4,
-      'I': 1, 'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3,
-      'Q': 10, 'R': 1, 'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8,
-      'Y': 4, 'Z': 10
+      'A':1,'B':3,'C':3,'D':2,'E':1,'F':4,'G':2,'H':4,
+      'I':1,'J':8,'K':5,'L':1,'M':3,'N':1,'O':1,'P':3,
+      'Q':10,'R':1,'S':1,'T':1,'U':1,'V':4,'W':4,'X':8,
+      'Y':4,'Z':10
     };
 
     let username = localStorage.getItem('username');
     if (!username) {
-      username = 'anon_' + Math.random().toString(36).substring(2, 10);
+      username = 'anon_' + Math.random().toString(36).substring(2,10);
       localStorage.setItem('username', username);
     }
 
     function openLoginModal() {
       document.getElementById('login-modal').style.display = 'flex';
     }
-
     function closeLoginModal() {
       document.getElementById('login-modal').style.display = 'none';
     }
+
+    function togglePanel(id) {
+      const el = document.getElementById(id);
+      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+      document.getElementById('drawer').classList.remove('open');
+    }
+
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+      document.getElementById('drawer').classList.toggle('open');
+    });
 
     function updateLocalStats(data) {
       if (!data) return;
@@ -225,16 +262,11 @@
       localStorage.setItem('longest_streak', data.longest_streak || 0);
     }
 
-    function toggleStats() {
-      const stats = document.getElementById("stats");
-      stats.style.display = stats.style.display === "none" ? "block" : "none";
-    }
-
     function loadStatsFromLocal() {
-      document.getElementById("token-display").innerText = localStorage.getItem('tokens') || 0;
-      document.getElementById("total-score").innerText = localStorage.getItem('score') || 0;
-      document.getElementById("current-streak").innerText = localStorage.getItem('current_streak') || 0;
-      document.getElementById("longest-streak").innerText = localStorage.getItem('longest_streak') || 0;
+      document.getElementById('token-display').innerText = localStorage.getItem('tokens') || 0;
+      document.getElementById('total-score').innerText = localStorage.getItem('score') || 0;
+      document.getElementById('current-streak').innerText = localStorage.getItem('current_streak') || 0;
+      document.getElementById('longest-streak').innerText = localStorage.getItem('longest_streak') || 0;
     }
 
     function getData() {
@@ -242,51 +274,50 @@
         .then(res => res.json())
         .then(data => {
           updateLocalStats(data);
-          const container = document.getElementById("letters");
-          container.innerHTML = "";
+          const container = document.getElementById('letters');
+          container.innerHTML = '';
           data.letters.forEach(letter => {
-            const span = document.createElement("span");
-            span.className = "tile";
+            const span = document.createElement('span');
+            span.className = 'tile';
             span.innerText = letter;
-            span.setAttribute("data-points", LETTER_POINTS[letter] || 0);
+            span.setAttribute('data-points', LETTER_POINTS[letter] || 0);
             container.appendChild(span);
           });
-          document.getElementById("token-display").innerText = data.tokens || 0;
-          document.getElementById("total-score").innerText = data.score || 0;
-          document.getElementById("best-word").innerText = data.highest_score ? `${data.best_word} (+${data.highest_score})` : "–";
-          document.getElementById("longest-word").innerText = data.longest_word || "–";
-          document.getElementById("current-streak").innerText = data.current_streak || 0;
-          document.getElementById("longest-streak").innerText = data.longest_streak || 0;
+          document.getElementById('token-display').innerText = data.tokens || 0;
+          document.getElementById('total-score').innerText = data.score || 0;
+          document.getElementById('best-word').innerText = data.highest_score ? `${data.best_word} (+${data.highest_score})` : '–';
+          document.getElementById('longest-word').innerText = data.longest_word || '–';
+          document.getElementById('current-streak').innerText = data.current_streak || 0;
+          document.getElementById('longest-streak').innerText = data.longest_streak || 0;
         });
     }
 
     function submitWord() {
-      const word = document.getElementById("word").value;
+      const word = document.getElementById('word').value;
       fetch('/submit-word', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, word })
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username, word})
       })
       .then(res => res.json())
       .then(data => {
-        if (data.status === "success") {
-          document.getElementById("result").innerText = `Word accepted: ${data.word} (+${data.score} points)`;
-          document.getElementById("token-display").innerText = data.tokens;
-          document.getElementById("daily-score").innerText = data.score;
+        if(data.status === 'success') {
+          document.getElementById('result').innerText = `Word accepted: ${data.word} (+${data.score} points)`;
+          document.getElementById('token-display').innerText = data.tokens;
+          document.getElementById('daily-score').innerText = data.score;
           updateLocalStats(data);
           getData();
         } else {
-          document.getElementById("result").innerText = data.message;
+          document.getElementById('result').innerText = data.message;
         }
       });
     }
 
     loadStatsFromLocal();
-
     fetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username})
     }).then(() => getData());
   </script>
 </body>
