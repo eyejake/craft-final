@@ -45,6 +45,34 @@ def calculate_word_score(word):
     return sum(LETTER_POINTS.get(letter.upper(), 0) for letter in word)
 
 
+def apply_daily_login(user, date_key):
+    """Apply daily login logic for the given date."""
+    if user['date'] != date_key:
+        user['letters'] = get_seeded_letters(date_key)
+        user['date'] = date_key
+        user['last_submission'] = None
+
+    today = datetime.strptime(date_key, '%Y-%m-%d').date()
+    if user['last_login']:
+        last_login = datetime.strptime(user['last_login'], '%Y-%m-%d').date()
+        if today - last_login == timedelta(days=1):
+            user['current_streak'] += 1
+        elif today - last_login > timedelta(days=1):
+            user['current_streak'] = 1
+    else:
+        user['current_streak'] = 1
+
+    user['longest_streak'] = max(user['longest_streak'], user['current_streak'])
+    user['last_login'] = date_key
+    user['login_days'].add(date_key)
+
+    new_achievements = []
+    if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
+        user['achievements'].append("Logged in 3 days in a row")
+        new_achievements.append("Logged in 3 days in a row")
+    return new_achievements
+
+
 @app.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
@@ -77,28 +105,8 @@ def login():
         user['best_word'] = max(user.get('history', []), key=lambda w: calculate_word_score(w), default='')
     if 'longest_word' not in user:
         user['longest_word'] = max(user.get('history', []), key=len, default='')
-    if user['date'] != today_key:
-        user['letters'] = get_seeded_letters(today_key)
-        user['date'] = today_key
 
-    today = datetime.utcnow().date()
-    if user['last_login']:
-        last_login = datetime.strptime(user['last_login'], '%Y-%m-%d').date()
-        if today - last_login == timedelta(days=1):
-            user['current_streak'] += 1
-        elif today - last_login > timedelta(days=1):
-            user['current_streak'] = 1
-    else:
-        user['current_streak'] = 1
-
-    user['longest_streak'] = max(user['longest_streak'], user['current_streak'])
-    user['last_login'] = today.strftime('%Y-%m-%d')
-    user['login_days'].add(today_key)
-
-    new_achievements = []
-    if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
-        user['achievements'].append("Logged in 3 days in a row")
-        new_achievements.append("Logged in 3 days in a row")
+    new_achievements = apply_daily_login(user, today_key)
 
     return jsonify({
         "status": "success",
@@ -226,27 +234,7 @@ def fast_forward_day():
     next_day = current_date + timedelta(days=1)
     next_key = next_day.strftime('%Y-%m-%d')
 
-    user['letters'] = get_seeded_letters(next_key)
-    user['date'] = next_key
-    user['last_submission'] = None
-
-    if user['last_login']:
-        last_login = datetime.strptime(user['last_login'], '%Y-%m-%d').date()
-        if next_day - last_login == timedelta(days=1):
-            user['current_streak'] += 1
-        elif next_day - last_login > timedelta(days=1):
-            user['current_streak'] = 1
-    else:
-        user['current_streak'] = 1
-
-    user['longest_streak'] = max(user['longest_streak'], user['current_streak'])
-    user['last_login'] = next_key
-    user['login_days'].add(next_key)
-
-    new_achievements = []
-    if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
-        user['achievements'].append("Logged in 3 days in a row")
-        new_achievements.append("Logged in 3 days in a row")
+    new_achievements = apply_daily_login(user, next_key)
 
     return jsonify({
         "status": "success",
