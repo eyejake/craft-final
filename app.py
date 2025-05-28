@@ -48,7 +48,10 @@ def calculate_word_score(word):
 def apply_daily_login(user, date_key):
     """Apply daily login logic for the given date."""
     if user['date'] != date_key:
-        user['letters'] = get_seeded_letters(date_key)
+        if len(user['history']) == 0:
+            user['letters'] = get_seeded_letters(date_key)
+        else:
+            user['letters'].append(random.choice(SCRABBLE_LETTER_POOL))
         user['date'] = date_key
         user['last_submission'] = None
 
@@ -70,6 +73,12 @@ def apply_daily_login(user, date_key):
     if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
         user['achievements'].append("Logged in 3 days in a row")
         new_achievements.append("Logged in 3 days in a row")
+
+    if user['current_streak'] >= 3:
+        if user['current_streak'] % 3 == 0 and user.get('last_spin_streak', 0) != user['current_streak']:
+            user['spin_available'] = True
+    else:
+        user['spin_available'] = False
     return new_achievements
 
 
@@ -98,7 +107,9 @@ def login():
             'longest_streak': 0,
             'last_login': None,
             'login_days': set(),
-            'achievements': []
+            'achievements': [],
+            'spin_available': False,
+            'last_spin_streak': 0
         }
     user = users[username]
     if 'best_word' not in user:
@@ -142,7 +153,8 @@ def get_letters():
         "dictionary_score": sum(entry['score'] for entry in user['dictionary']),
         "submitted_today": submitted_today,
         "last_word": last_word,
-        "last_word_score": last_score
+        "last_word_score": last_score,
+        "spin_available": user.get('spin_available', False)
     })
 
 
@@ -223,6 +235,25 @@ def submit_word():
     return jsonify(result)
 
 
+@app.route('/spin', methods=['POST'])
+def spin_wheel():
+    username = request.json.get('username')
+    user = users.get(username)
+    if not user:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    if not user.get('spin_available'):
+        return jsonify({"status": "fail", "message": "Spin not available"})
+
+    tiles_to_add = random.randint(1, 3)
+    new_tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(tiles_to_add)]
+    user['letters'].extend(new_tiles)
+    user['spin_available'] = False
+    user['last_spin_streak'] = user['current_streak']
+
+    return jsonify({"status": "success", "new_tiles": new_tiles, "letters": user['letters']})
+
+
 @app.route('/fast-forward-day', methods=['POST'])
 def fast_forward_day():
     username = request.json.get('username')
@@ -240,7 +271,8 @@ def fast_forward_day():
         "status": "success",
         "letters": user['letters'],
         "date": next_key,
-        "new_achievements": new_achievements
+        "new_achievements": new_achievements,
+        "spin_available": user.get('spin_available', False)
     })
 
 
