@@ -298,10 +298,22 @@
       font-size: 1em;
       cursor: pointer;
     }
+
+    #wheel {
+      border-top: 4px solid var(--orange);
+      border-right: 4px solid var(--teal);
+      border-bottom: 4px solid var(--gold);
+      border-left: 4px solid var(--orange);
+    }
   
     @keyframes popup-fade {
       from { transform: scale(0.8); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(720deg); }
     }
   </style>
 </head>
@@ -328,6 +340,8 @@
     <div id="letters"></div>
     <input type="text" id="word" placeholder="Enter a word">
     <button id="submit-btn" class="submit" onclick="submitWord()">SUBMIT</button>
+    <div id="wheel" style="display:none; margin:10px; width:80px; height:80px; border-radius:50%; border:4px solid var(--gold);"></div>
+    <button id="spin-btn" class="submit" style="display:none;" onclick="spinWheel()">Spin</button>
     <div id="result"></div>
     <div id="completed-screen"></div>
     <div id="stats">
@@ -568,6 +582,8 @@
           updateAchievementsList();
           if(data.submitted_today) {
             showCompletedScreen(data.last_word, data.last_word_score, data.score);
+            const spinBtn = document.getElementById('spin-btn');
+            spinBtn.style.display = data.spin_available ? 'block' : 'none';
             return;
           }
           const container = document.getElementById('letters');
@@ -590,6 +606,8 @@
           document.getElementById('current-streak').innerText = data.current_streak || 0;
           document.getElementById('longest-streak').innerText = data.longest_streak || 0;
           updateDictionaryList(data.dictionary || [], data.dictionary_score || 0);
+          const spinBtn = document.getElementById('spin-btn');
+          spinBtn.style.display = data.spin_available ? 'block' : 'none';
         });
     }
 
@@ -605,6 +623,7 @@
           if(data.status === 'success') {
             document.getElementById('token-display').innerText = data.tokens;
             document.getElementById('daily-score').innerText = data.score;
+            document.getElementById('total-score').innerText = data.total_score;
             updateLocalStats({tokens: data.tokens, score: data.total_score});
             document.getElementById('best-word').innerText = data.highest_score ? `${data.best_word} (+${data.highest_score})` : '–';
             document.getElementById('longest-word').innerText = data.longest_word || '–';
@@ -623,7 +642,7 @@
       });
     }
 
-    function fastForwardDay() {
+  function fastForwardDay() {
       fetch('/fast-forward-day', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -635,9 +654,33 @@
             if(data.new_achievements) {
               data.new_achievements.forEach(a => showAchievement(a));
             }
+            const spinBtn = document.getElementById('spin-btn');
+            spinBtn.style.display = data.spin_available ? 'block' : 'none';
             getData();
           } else {
             showMessage(data.message || 'Error');
+          }
+        });
+    }
+
+    function spinWheel() {
+      const wheel = document.getElementById('wheel');
+      wheel.style.display = 'block';
+      wheel.style.animation = 'spin 1s ease-out';
+      fetch('/spin', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username})
+      })
+        .then(res => res.json())
+        .then(data => {
+          wheel.style.animation = '';
+          wheel.style.display = 'none';
+          if(data.status === 'success') {
+            showMessage(`You won ${data.new_tiles.length} tile${data.new_tiles.length>1?'s':''}!`);
+            getData();
+          } else {
+            showMessage(data.message || 'Spin failed');
           }
         });
     }
