@@ -109,6 +109,12 @@ def get_letters():
     user = users.get(username)
     if not user:
         return jsonify({"status": "error", "message": "User not found"}), 404
+
+    today_key = datetime.utcnow().strftime('%Y-%m-%d')
+    submitted_today = user.get('last_submission') == today_key
+    last_word = user['history'][-1] if submitted_today and user['history'] else ''
+    last_score = calculate_word_score(last_word) if last_word else 0
+
     return jsonify({
         "letters": user['letters'],
         "tokens": user['tokens'],
@@ -120,7 +126,10 @@ def get_letters():
         "longest_streak": user['longest_streak'],
         "achievements": user['achievements'],
         "dictionary": user['dictionary'],
-        "dictionary_score": sum(entry['score'] for entry in user['dictionary'])
+        "dictionary_score": sum(entry['score'] for entry in user['dictionary']),
+        "submitted_today": submitted_today,
+        "last_word": last_word,
+        "last_word_score": last_score
     })
 
 
@@ -186,6 +195,7 @@ def submit_word():
         "new_letters": user['letters'],
         "word": word,
         "score": score,
+        "total_score": user['score'],
         "tokens": user['tokens'],
         "achievements": user['achievements'],
         "new_achievements": new_achievements,

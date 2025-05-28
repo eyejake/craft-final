@@ -277,6 +277,28 @@
       font-size: 1.2em;
     }
 
+    #completed-screen {
+      display: none;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 350px;
+      margin-top: 20px;
+    }
+    #completed-screen button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: var(--orange);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+    }
+  
     @keyframes popup-fade {
       from { transform: scale(0.8); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
@@ -304,8 +326,9 @@
   <div id="content">
     <div id="letters"></div>
     <input type="text" id="word" placeholder="Enter a word">
-    <button class="submit" onclick="submitWord()">SUBMIT</button>
+    <button id="submit-btn" class="submit" onclick="submitWord()">SUBMIT</button>
     <div id="result"></div>
+    <div id="completed-screen"></div>
     <div id="stats">
       <span class="close-panel" onclick="closePanel('stats')">&times;</span>
       <h3>STATS</h3>
@@ -447,10 +470,10 @@
 
       function updateLocalStats(data) {
         if (!data) return;
-        localStorage.setItem('tokens', data.tokens || 0);
-        localStorage.setItem('score', data.score || 0);
-        localStorage.setItem('current_streak', data.current_streak || 0);
-        localStorage.setItem('longest_streak', data.longest_streak || 0);
+        if (data.tokens !== undefined) localStorage.setItem('tokens', data.tokens);
+        if (data.score !== undefined) localStorage.setItem('score', data.score);
+        if (data.current_streak !== undefined) localStorage.setItem('current_streak', data.current_streak);
+        if (data.longest_streak !== undefined) localStorage.setItem('longest_streak', data.longest_streak);
       }
 
       function showAchievement(name) {
@@ -480,6 +503,24 @@
           list.appendChild(li);
         });
         totalEl.innerText = words.length ? `Total Score: ${total}` : '';
+      }
+
+      function showCompletedScreen(word, score, total) {
+        document.getElementById('letters').style.display = 'none';
+        document.getElementById('word').style.display = 'none';
+        const submitBtn = document.getElementById('submit-btn');
+        if(submitBtn) submitBtn.style.display = 'none';
+        document.getElementById('result').style.display = 'none';
+
+        const screen = document.getElementById('completed-screen');
+        screen.innerHTML = `
+          <h3>${word}</h3>
+          <p>Word Score: ${score}</p>
+          <p>Total Score: ${total}</p>
+          <button onclick="togglePanel('stats')">View Stats</button>
+          <p>You\u2019ve completed your turn for the day.</p>
+        `;
+        screen.style.display = 'block';
       }
 
     let selectedTiles = [];
@@ -513,14 +554,18 @@
       document.getElementById('longest-streak').innerText = localStorage.getItem('longest_streak') || 0;
     }
 
-    function getData() {
-      fetch(`/get-letters?username=${username}`)
-        .then(res => res.json())
-          .then(data => {
-            updateLocalStats(data);
-            achievements = data.achievements || [];
-            updateAchievementsList();
-            const container = document.getElementById('letters');
+  function getData() {
+    fetch(`/get-letters?username=${username}`)
+      .then(res => res.json())
+        .then(data => {
+          updateLocalStats(data);
+          achievements = data.achievements || [];
+          updateAchievementsList();
+          if(data.submitted_today) {
+            showCompletedScreen(data.last_word, data.last_word_score, data.score);
+            return;
+          }
+          const container = document.getElementById('letters');
           container.innerHTML = '';
           selectedTiles = [];
           document.getElementById('word').value = '';
@@ -553,10 +598,9 @@
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {
-            document.getElementById('result').innerText = `Word accepted: ${data.word} (+${data.score} points)`;
             document.getElementById('token-display').innerText = data.tokens;
             document.getElementById('daily-score').innerText = data.score;
-            updateLocalStats(data);
+            updateLocalStats({tokens: data.tokens, score: data.total_score});
             if(data.new_achievements) {
               data.new_achievements.forEach(a => {
                 achievements.push(a);
