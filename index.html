@@ -157,6 +157,7 @@
         background: #1e1e1e;
         padding: 15px;
         border-radius: 10px;
+        position: relative;
         width: 100%;
         max-width: 350px;
         margin-top: 20px;
@@ -164,6 +165,13 @@
       #stats h3, #dictionary h3, #achievements h3 {
         margin-top: 0;
         color: #ffa726;
+      }
+      .close-panel {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 1.2em;
       }
 
       #achievement-toast {
@@ -224,6 +232,7 @@
     <button class="submit" onclick="submitWord()">SUBMIT</button>
     <div id="result"></div>
     <div id="stats">
+      <span class="close-panel" onclick="closePanel('stats')">&times;</span>
       <h3>STATS</h3>
       <p>Total Score: <span id="total-score">0</span></p>
       <p>Best Word: <span id="best-word">–</span></p>
@@ -232,11 +241,13 @@
       <p>Longest Streak: <span id="longest-streak">0</span></p>
     </div>
       <div id="dictionary">
+        <span class="close-panel" onclick="closePanel('dictionary')">&times;</span>
         <h3>MY DICTIONARY</h3>
         <ul id="dictionary-list"></ul>
         <p id="dictionary-total"></p>
       </div>
       <div id="achievements">
+        <span class="close-panel" onclick="closePanel('achievements')">&times;</span>
         <h3>ACHIEVEMENTS</h3>
         <ul id="achievements-list"></ul>
       </div>
@@ -283,6 +294,10 @@
       const el = document.getElementById(id);
       el.style.display = el.style.display === 'block' ? 'none' : 'block';
       document.getElementById('drawer').classList.remove('open');
+    }
+
+    function closePanel(id) {
+      document.getElementById(id).style.display = 'none';
     }
 
     document.getElementById('menu-toggle').addEventListener('click', () => {
