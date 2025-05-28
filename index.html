@@ -125,6 +125,37 @@
       background-color: #d35400;
     }
 
+    #signin-btn {
+      margin-left: 10px;
+      background-color: #3498db;
+    }
+
+    #login-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+    }
+
+    #login-modal .modal-content {
+      background: #ffffff;
+      color: #000000;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    #login-modal button {
+      margin: 4px;
+      padding: 8px 12px;
+    }
+
     #result {
       margin-top: 15px;
       font-size: 1.1em;
@@ -132,7 +163,7 @@
   </style>
 </head>
 <body>
-  <h1><div id="token-display">0</div> WordForge Live</h1>
+  <h1><div id="token-display">0</div> WordForge Live <button id="signin-btn" onclick="openLoginModal()">Sign in to sync your stats</button></h1>
 
   <div id="today-score">Today's Points: <span id="daily-score">0</span></div>
   <button id="stats-toggle" onclick="toggleStats()">Show Stats</button>
@@ -151,6 +182,19 @@
   <button onclick="submitWord()">SUBMIT</button>
   <div id="result"></div>
 
+  <div id="login-modal">
+    <div class="modal-content">
+      <h2>Sign in</h2>
+      <p>Sync your stats with an account.</p>
+      <button>Email</button>
+      <button>Google</button>
+      <button>Apple</button>
+      <button>Facebook</button>
+      <br>
+      <button class="close" onclick="closeLoginModal()">Close</button>
+    </div>
+  </div>
+
   <script>
     const LETTER_POINTS = {
       'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4,
@@ -159,17 +203,45 @@
       'Y': 4, 'Z': 10
     };
 
-    const username = prompt("Enter your username:");
+    let username = localStorage.getItem('username');
+    if (!username) {
+      username = 'anon_' + Math.random().toString(36).substring(2, 10);
+      localStorage.setItem('username', username);
+    }
+
+    function openLoginModal() {
+      document.getElementById('login-modal').style.display = 'flex';
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-modal').style.display = 'none';
+    }
+
+    function updateLocalStats(data) {
+      if (!data) return;
+      localStorage.setItem('tokens', data.tokens || 0);
+      localStorage.setItem('score', data.score || 0);
+      localStorage.setItem('current_streak', data.current_streak || 0);
+      localStorage.setItem('longest_streak', data.longest_streak || 0);
+    }
 
     function toggleStats() {
       const stats = document.getElementById("stats");
       stats.style.display = stats.style.display === "none" ? "block" : "none";
     }
 
+    function loadStatsFromLocal() {
+      document.getElementById("token-display").innerText = localStorage.getItem('tokens') || 0;
+      document.getElementById("total-score").innerText = localStorage.getItem('score') || 0;
+      document.getElementById("current-streak").innerText = localStorage.getItem('current_streak') || 0;
+      document.getElementById("longest-streak").innerText = localStorage.getItem('longest_streak') || 0;
+    }
+
     function getData() {
       fetch(`/get-letters?username=${username}`)
         .then(res => res.json())
         .then(data => {
+          updateLocalStats(data);
           const container = document.getElementById("letters");
           container.innerHTML = "";
           data.letters.forEach(letter => {
@@ -201,12 +273,15 @@
           document.getElementById("result").innerText = `Word accepted: ${data.word} (+${data.score} points)`;
           document.getElementById("token-display").innerText = data.tokens;
           document.getElementById("daily-score").innerText = data.score;
+          updateLocalStats(data);
           getData();
         } else {
           document.getElementById("result").innerText = data.message;
         }
       });
     }
+
+    loadStatsFromLocal();
 
     fetch('/login', {
       method: 'POST',
