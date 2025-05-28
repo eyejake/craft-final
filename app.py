@@ -64,6 +64,7 @@ def login():
             'tokens': 10,
             'score': 0,
             'highest_score': 0,
+            'best_word': '',
             'longest_word': '',
             'current_streak': 0,
             'longest_streak': 0,
@@ -72,6 +73,10 @@ def login():
             'achievements': []
         }
     user = users[username]
+    if 'best_word' not in user:
+        user['best_word'] = max(user.get('history', []), key=lambda w: calculate_word_score(w), default='')
+    if 'longest_word' not in user:
+        user['longest_word'] = max(user.get('history', []), key=len, default='')
     if user['date'] != today_key:
         user['letters'] = get_seeded_letters(today_key)
         user['date'] = today_key
@@ -120,8 +125,8 @@ def get_letters():
         "tokens": user['tokens'],
         "score": user['score'],
         "highest_score": user['highest_score'],
-        "best_word": max(user['history'], key=lambda w: calculate_word_score(w), default=""),
-        "longest_word": user['longest_word'],
+        "best_word": user.get('best_word') or max(user['history'], key=lambda w: calculate_word_score(w), default=""),
+        "longest_word": user.get('longest_word') or max(user['history'], key=len, default=""),
         "current_streak": user['current_streak'],
         "longest_streak": user['longest_streak'],
         "achievements": user['achievements'],
@@ -172,6 +177,7 @@ def submit_word():
     user['score'] += score
     if score > user['highest_score']:
         user['highest_score'] = score
+        user['best_word'] = word
     if len(word) > len(user['longest_word']):
         user['longest_word'] = word
 
