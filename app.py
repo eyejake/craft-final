@@ -108,6 +108,44 @@ def apply_daily_login(user, date_key):
 
     return new_achievements, tokens_earned, reward
 
+def check_achievements(user, word=None, score=None, event_type=None):
+    """Check and award achievements based on the event type."""
+    new_achievements = []
+    tokens = 0
+
+    if event_type == 'login':
+        if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
+            user['achievements'].append("Logged in 3 days in a row")
+            new_achievements.append("Logged in 3 days in a row")
+            tokens += ACHIEVEMENT_TOKEN_REWARD
+
+    if event_type == 'submission':
+        if len(user['history']) == 1 and "First word submitted" not in user['achievements']:
+            user['achievements'].append("First word submitted")
+            new_achievements.append("First word submitted")
+            tokens += ACHIEVEMENT_TOKEN_REWARD
+        if score is not None and score >= 10 and "Scored 10+ points in a word" not in user['achievements']:
+            user['achievements'].append("Scored 10+ points in a word")
+            new_achievements.append("Scored 10+ points in a word")
+            tokens += ACHIEVEMENT_TOKEN_REWARD
+        if word is not None and len(word) == LETTER_POOL_SIZE and "Used all 7 letters" not in user['achievements']:
+            user['achievements'].append("Used all 7 letters")
+            new_achievements.append("Used all 7 letters")
+            tokens += ACHIEVEMENT_TOKEN_REWARD
+
+    if event_type == 'wordcount':
+        count = len(user['dictionary'])
+        if count >= 5 and "Found 5 words" not in user['achievements']:
+            user['achievements'].append("Found 5 words")
+            new_achievements.append("Found 5 words")
+            tokens += ACHIEVEMENT_TOKEN_REWARD
+        if count >= 10 and "Found 10 words" not in user['achievements']:
+            user['achievements'].append("Found 10 words")
+            new_achievements.append("Found 10 words")
+            tokens += ACHIEVEMENT_TOKEN_REWARD
+
+    return new_achievements, tokens
+
 @app.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
@@ -135,7 +173,9 @@ def login():
             'login_days': set(),
             'achievements': [],
             'spin_available': False,
-            'last_spin_streak': 0
+            'last_spin_streak': 0,
+            'tokens_spent': 0,
+            'tiles_swapped': 0
         }
     user = users[username]
     if 'best_word' not in user:
@@ -143,16 +183,25 @@ def login():
     if 'longest_word' not in user:
         user['longest_word'] = max(user.get('history', []), key=len, default='')
 
-    new_achievements, earned, milestone_reward = apply_daily_login(user, today_key)
+    daily_achievements, earned, milestone_reward = apply_daily_login(user, today_key)
     if earned:
         user['tokens'] += earned
+
+    login_achievements, login_tokens = check_achievements(user, event_type='login')
+    if login_tokens:
+        user['tokens'] += login_tokens
+
+    all_new = []
+    all_new.extend(daily_achievements)
+    all_new.extend(login_achievements)
 
     return jsonify({
         "status": "success",
         "username": username,
         "tokens": user['tokens'],
         "achievements": user['achievements'],
-        "milestone_reward": milestone_reward
+        "milestone_reward": milestone_reward,
+        "new_achievements": all_new
     })
 
 @app.route('/get-letters', methods=['GET'])
@@ -203,7 +252,7 @@ def submit_word():
         daily_achievements, earned, _ = apply_daily_login(user, today_key)
         if earned:
             user['tokens'] += earned
-
+    
     cost = user['submissions_today'] + 1
     if user['tokens'] < cost:
         return jsonify({"status": "fail", "message": "Not enough tokens"})
@@ -211,7 +260,6 @@ def submit_word():
     new_achievements = []
     if user['date'] != today_key:
         new_achievements.extend(daily_achievements if 'daily_achievements' in locals() else [])
-    first_word = len(user['history']) == 0
 
     letters_copy = user['letters'][:]
     for char in word:
@@ -229,6 +277,7 @@ def submit_word():
         user['dictionary'].append({"word": word, "score": score})
     user['last_submission'] = today_key
     user['tokens'] -= cost
+    user['tokens_spent'] += cost
     if len(word) == LETTER_POOL_SIZE:
         user['tokens'] += 3
 
@@ -240,18 +289,15 @@ def submit_word():
         user['longest_word'] = word
 
     tokens_from_achievements = 0
-    if first_word and "First word submitted" not in user['achievements']:
-        user['achievements'].append("First word submitted")
-        new_achievements.append("First word submitted")
-        tokens_from_achievements += ACHIEVEMENT_TOKEN_REWARD
-    if score >= 10 and "Scored 10+ points in a word" not in user['achievements']:
-        user['achievements'].append("Scored 10+ points in a word")
-        new_achievements.append("Scored 10+ points in a word")
-        tokens_from_achievements += ACHIEVEMENT_TOKEN_REWARD
-    if len(word) == LETTER_POOL_SIZE and "Used all 7 letters" not in user['achievements']:
-        user['achievements'].append("Used all 7 letters")
-        new_achievements.append("Used all 7 letters")
-        tokens_from_achievements += ACHIEVEMENT_TOKEN_REWARD
+    submission_achievements, earned = check_achievements(
+        user, word, score, event_type='submission'
+    )
+    tokens_from_achievements += earned
+    new_achievements.extend(submission_achievements)
+
+    vocab_achievements, vocab_tokens = check_achievements(user, event_type='wordcount')
+    tokens_from_achievements += vocab_tokens
+    new_achievements.extend(vocab_achievements)
 
     if len(word) == len(user['letters']):
         user['letters'] = get_seeded_letters(today_key)
@@ -328,8 +374,10 @@ def swap_letters():
         return jsonify({"status": "fail", "message": "Not enough tokens"})
 
     user['tokens'] -= cost
+    user['tokens_spent'] += cost
     for idx in indices_to_swap:
         user['letters'][idx] = random.choice(SCRABBLE_LETTER_POOL)
+        user['tiles_swapped'] += 1
 
     return jsonify({"status": "success", "letters": user['letters'], "tokens": user['tokens']})
 
