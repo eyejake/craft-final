@@ -85,7 +85,7 @@ def apply_daily_login(user, date_key):
 
             if len(user['letters']) < MAX_TILES:
                 user['letters'].append(random.choice(SCRABBLE_LETTER_POOL))
-=======
+
             # Subsequent days grant a single new tile
             user['letters'].append(random.choice(SCRABBLE_LETTER_POOL))
 
@@ -122,8 +122,7 @@ def apply_daily_login(user, date_key):
         user['spin_available'] = False
     return new_achievements, tokens_earned
 
-=======
-=======
+
     reward = None
     if user['current_streak'] in MILESTONES:
         reward = grant_milestone_reward(user)
@@ -173,12 +172,12 @@ c
     new_achievements, earned = apply_daily_login(user, today_key)
     if earned:
         user['tokens'] += earned
-=======
+
 
     new_achievements, earned = apply_daily_login(user, today_key)
     if earned:
         user['tokens'] += earned
-=======
+
     milestone_reward = apply_daily_login(user, today_key)
 
 
@@ -223,10 +222,8 @@ def get_letters():
         "spin_available": user.get('spin_available', False),
 
         "submissions_today": user['submissions_today']
-=======
 
-        "submissions_today": user['submissions_today']
-=======
+
         "next_milestone": next_milestone
 
 
@@ -342,8 +339,6 @@ def spin_wheel():
     tokens_won = random.randint(1, 3)
     user['tokens'] += tokens_won
 
-=======
-=======
     available_slots = MAX_TILES - len(user['letters'])
     new_tiles = []
     if available_slots > 0:
@@ -373,12 +368,12 @@ def fast_forward_day():
     new_achievements, earned = apply_daily_login(user, next_key)
     if earned:
         user['tokens'] += earned
-=======
+
 
     new_achievements, earned = apply_daily_login(user, next_key)
     if earned:
         user['tokens'] += earned
-=======
+
     milestone_reward = apply_daily_login(user, next_key)
 
 
@@ -392,8 +387,7 @@ def fast_forward_day():
         "spin_available": user.get('spin_available', False),
         "tokens": user['tokens']
 
-=======
-=======
+
         "milestone_reward": milestone_reward,
         "spin_available": user.get('spin_available', False)
 
