@@ -26,17 +26,6 @@ SCRABBLE_LETTER_POOL = (
     ['F'] * 2 + ['H'] * 2 + ['V'] * 2 + ['W'] * 2 + ['Y'] * 2 + ['K'] * 1 + ['J'] * 1 + ['X'] * 1 + ['Q'] * 1 + ['Z'] * 1
 )
 
-def get_seeded_letters(date_seed, n=LETTER_POOL_SIZE):
-    random.seed(date_seed)
-    letters = []
-    for _ in range(2):
-        letters.append(random.choice(VOWELS))
-    while len(letters) < n:
-        letters.append(random.choice(SCRABBLE_LETTER_POOL))
-    random.shuffle(letters)
-    return letters
-
-
 def get_random_letters(n=LETTER_POOL_SIZE):
     """Return a random set of letters independent of the daily seed."""
     letters = []
@@ -78,7 +67,7 @@ def apply_daily_login(user, date_key):
     # Apply daily login logic for the given date
     if user['date'] != date_key:
         if user.get('last_login') is None:
-            user['letters'] = get_seeded_letters(date_key)
+            user['letters'] = get_random_letters()
         else:
             if len(user['letters']) == 0:
                 user['letters'] = get_random_letters()
@@ -169,7 +158,7 @@ def login():
     today_key = datetime.utcnow().strftime('%Y-%m-%d')
     if username not in users:
         users[username] = {
-            'letters': get_seeded_letters(today_key),
+            'letters': get_random_letters(),
             'history': [],
             'dictionary': [],
             'date': today_key,
