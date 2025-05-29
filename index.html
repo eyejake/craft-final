@@ -754,12 +754,8 @@
           updateLocalStats(data);
           achievements = data.achievements || [];
           updateAchievementsList();
-          if(data.submitted_today) {
-            showCompletedScreen(data.last_word, data.last_word_score, data.score);
-            const spinBtn = document.getElementById('spin-btn');
-            spinBtn.style.display = data.spin_available ? 'block' : 'none';
-            return;
-          }
+          // No daily submission cap. Interface is always reloaded with the
+          // updated rack after each play.
           const container = document.getElementById('letters');
           container.innerHTML = '';
           selectedTiles = [];
@@ -799,6 +795,7 @@
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {
+            showMessage(`You earned ${data.score} point${data.score!==1?'s':''}!`);
             document.getElementById('token-display').innerText = data.tokens;
             document.getElementById('total-score-display').innerText = data.total_score;
             document.getElementById('total-score').innerText = data.total_score;
@@ -812,11 +809,11 @@
               });
               updateAchievementsList();
             }
-          updateDictionaryList(data.dictionary || [], data.dictionary_score || 0);
-          getData();
-        } else {
-          showMessage(data.message);
-        }
+            updateDictionaryList(data.dictionary || [], data.dictionary_score || 0);
+            setTimeout(getData, 500);
+          } else {
+            showMessage(data.message);
+          }
       });
     }
 
