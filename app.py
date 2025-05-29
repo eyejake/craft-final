@@ -36,6 +36,17 @@ def get_seeded_letters(date_seed, n=LETTER_POOL_SIZE):
     random.shuffle(letters)
     return letters
 
+
+def get_random_letters(n=LETTER_POOL_SIZE):
+    """Return a random set of letters independent of the daily seed."""
+    letters = []
+    for _ in range(2):
+        letters.append(random.choice(VOWELS))
+    while len(letters) < n:
+        letters.append(random.choice(SCRABBLE_LETTER_POOL))
+    random.shuffle(letters)
+    return letters
+
 def is_valid_word(word):
     url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word.lower()}"
     response = requests.get(url)
@@ -69,7 +80,9 @@ def apply_daily_login(user, date_key):
         if user.get('last_login') is None:
             user['letters'] = get_seeded_letters(date_key)
         else:
-            if len(user['letters']) < MAX_TILES:
+            if len(user['letters']) == 0:
+                user['letters'] = get_random_letters()
+            elif len(user['letters']) < MAX_TILES:
                 user['letters'].append(random.choice(SCRABBLE_LETTER_POOL))
         user['date'] = date_key
         user['last_submission'] = None
@@ -301,7 +314,8 @@ def submit_word():
     new_achievements.extend(vocab_achievements)
 
     if len(word) == len(user['letters']):
-        user['letters'] = get_seeded_letters(today_key)
+        # Rack is empty after playing this word; refill with random letters
+        user['letters'] = get_random_letters()
     else:
         user['letters'] = letters_copy
 
