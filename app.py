@@ -234,7 +234,8 @@ def get_letters():
         "last_word_score": last_score,
         "spin_available": user.get('spin_available', False),
         "submissions_today": user['submissions_today'],
-        "next_milestone": next_milestone
+        "next_milestone": next_milestone,
+        "next_cost": user['submissions_today']
     })
 
 @app.route('/submit-word', methods=['POST'])
@@ -253,7 +254,7 @@ def submit_word():
         if earned:
             user['tokens'] += earned
     
-    cost = user['submissions_today'] + 1
+    cost = user['submissions_today']
     if user['tokens'] < cost:
         return jsonify({"status": "fail", "message": "Not enough tokens"})
 
