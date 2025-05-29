@@ -321,7 +321,7 @@
   <header>
     <button id="menu-toggle">&#9776;</button>
     <div id="top-info">
-      <div id="token-display">0</div>
+      <div>Tokens: <span id="token-display">0</span></div>
       <div>Pts: <span id="daily-score">0</span></div>
     </div>
   </header>
@@ -654,6 +654,8 @@
             if(data.new_achievements) {
               data.new_achievements.forEach(a => showAchievement(a));
             }
+            document.getElementById('token-display').innerText = data.tokens;
+            updateLocalStats({tokens: data.tokens});
             const spinBtn = document.getElementById('spin-btn');
             spinBtn.style.display = data.spin_available ? 'block' : 'none';
             getData();
@@ -677,7 +679,9 @@
           wheel.style.animation = '';
           wheel.style.display = 'none';
           if(data.status === 'success') {
-            showMessage(`You won ${data.new_tiles.length} tile${data.new_tiles.length>1?'s':''}!`);
+            showMessage(`You won ${data.new_tiles.length} tile${data.new_tiles.length>1?'s':''} and ${data.tokens_won} token${data.tokens_won>1?'s':''}!`);
+            document.getElementById('token-display').innerText = data.tokens;
+            updateLocalStats({tokens: data.tokens});
             getData();
           } else {
             showMessage(data.message || 'Spin failed');
