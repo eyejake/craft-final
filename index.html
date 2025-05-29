@@ -74,6 +74,9 @@
     }
 
     #stat-bar {
+      position: fixed;
+      top: 56px;
+      left: 0;
       width: 100%;
       display: flex;
       justify-content: space-between;
@@ -82,8 +85,11 @@
       font-size: 1em;
       font-weight: bold;
       background: var(--orange);
-      color: #000;
+      color: #fff;
       border-bottom: 2px solid var(--gold);
+      z-index: 9;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .stat-item {
@@ -150,8 +156,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-top: 110px;
-      min-height: calc(100vh - 110px);
+      margin-top: 120px;
+      min-height: calc(100vh - 120px);
     }
 
     #letters {
