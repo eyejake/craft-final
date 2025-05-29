@@ -9,6 +9,7 @@ app = Flask(__name__, static_folder=".")
 users = {}
 LETTER_POOL_SIZE = 7
 VOWELS = ['A', 'E', 'I', 'O', 'U']
+MILESTONES = [3, 7, 21]
 
 LETTER_POINTS = {
     'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4,
@@ -45,6 +46,27 @@ def calculate_word_score(word):
     return sum(LETTER_POINTS.get(letter.upper(), 0) for letter in word)
 
 
+def grant_milestone_reward(user):
+    """Give rewards based on the user's current streak milestone."""
+    streak = user['current_streak']
+    reward = {"milestone": streak}
+    if streak == 3:
+        tiles = [random.choice(SCRABBLE_LETTER_POOL)]
+        user['letters'].extend(tiles)
+        reward["tiles"] = tiles
+    elif streak == 7:
+        tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(2)]
+        user['letters'].extend(tiles)
+        reward["tiles"] = tiles
+    elif streak == 21:
+        tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(3)]
+        user['letters'].extend(tiles)
+        user['tokens'] += 10
+        reward["tiles"] = tiles
+        reward["tokens"] = 10
+    return reward
+
+
 def apply_daily_login(user, date_key):
     """Apply daily login logic for the given date."""
     if user['date'] != date_key:
@@ -71,17 +93,11 @@ def apply_daily_login(user, date_key):
     user['last_login'] = date_key
     user['login_days'].add(date_key)
 
-    new_achievements = []
-    if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
-        user['achievements'].append("Logged in 3 days in a row")
-        new_achievements.append("Logged in 3 days in a row")
+    reward = None
+    if user['current_streak'] in MILESTONES:
+        reward = grant_milestone_reward(user)
 
-    if user['current_streak'] >= 3:
-        if user['current_streak'] % 3 == 0 and user.get('last_spin_streak', 0) != user['current_streak']:
-            user['spin_available'] = True
-    else:
-        user['spin_available'] = False
-    return new_achievements
+    return reward
 
 
 @app.route('/')
@@ -119,13 +135,13 @@ def login():
     if 'longest_word' not in user:
         user['longest_word'] = max(user.get('history', []), key=len, default='')
 
-    new_achievements = apply_daily_login(user, today_key)
+    milestone_reward = apply_daily_login(user, today_key)
 
     return jsonify({
         "status": "success",
         "username": username,
         "achievements": user['achievements'],
-        "new_achievements": new_achievements
+        "milestone_reward": milestone_reward
     })
 
 
@@ -140,6 +156,7 @@ def get_letters():
     submitted_today = user.get('last_submission') == today_key
     last_word = user['history'][-1] if submitted_today and user['history'] else ''
     last_score = calculate_word_score(last_word) if last_word else 0
+    next_milestone = next((m for m in MILESTONES if user['current_streak'] < m), MILESTONES[-1])
 
     return jsonify({
         "letters": user['letters'],
@@ -156,7 +173,8 @@ def get_letters():
         "submitted_today": submitted_today,
         "last_word": last_word,
         "last_word_score": last_score,
-        "spin_available": user.get('spin_available', False)
+        "spin_available": user.get('spin_available', False),
+        "next_milestone": next_milestone
     })
 
 
@@ -267,13 +285,13 @@ def fast_forward_day():
     next_day = current_date + timedelta(days=1)
     next_key = next_day.strftime('%Y-%m-%d')
 
-    new_achievements = apply_daily_login(user, next_key)
+    milestone_reward = apply_daily_login(user, next_key)
 
     return jsonify({
         "status": "success",
         "letters": user['letters'],
         "date": next_key,
-        "new_achievements": new_achievements,
+        "milestone_reward": milestone_reward,
         "spin_available": user.get('spin_available', False)
     })
 

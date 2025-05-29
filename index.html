@@ -202,6 +202,28 @@
       background: #cf711f;
     }
 
+    #milestone-container {
+      width: 100%;
+      max-width: 350px;
+      margin: 10px auto;
+    }
+    #milestone-bar-container {
+      background: #333;
+      height: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #milestone-bar {
+      background: var(--gold);
+      height: 100%;
+      width: 0%;
+    }
+    #milestone-label {
+      text-align: center;
+      font-size: 0.9em;
+      margin-top: 4px;
+    }
+
       #stats, #dictionary, #achievements {
         display: none;
         position: fixed;
@@ -385,6 +407,10 @@
 
   <div id="content">
     <div id="letters"></div>
+    <div id="milestone-container">
+      <div id="milestone-bar-container"><div id="milestone-bar"></div></div>
+      <div id="milestone-label">0/3</div>
+    </div>
     <input type="text" id="word" placeholder="Enter a word">
     <button id="submit-btn" class="submit" onclick="submitWord()">SUBMIT</button>
     <div id="wheel" style="display:none; margin:10px; width:80px; height:80px; border-radius:50%; border:4px solid var(--gold);"></div>
@@ -563,6 +589,13 @@
         setTimeout(() => { toast.style.display = 'none'; }, 2000);
       }
 
+      function showMilestoneReward(reward) {
+        let msg = `Milestone ${reward.milestone} reached!`;
+        if(reward.tiles) msg += ` +${reward.tiles.length} tile${reward.tiles.length>1?'s':''}`;
+        if(reward.tokens) msg += ` +${reward.tokens} tokens`;
+        showMessage(msg);
+      }
+
       function updateAchievementsList() {
         const list = document.getElementById('achievements-list');
         list.innerHTML = '';
@@ -666,6 +699,9 @@
           document.getElementById('longest-word').innerText = data.longest_word || '–';
           document.getElementById('current-streak').innerText = data.current_streak || 0;
           document.getElementById('longest-streak').innerText = data.longest_streak || 0;
+          const pct = Math.min((data.current_streak / data.next_milestone) * 100, 100);
+          document.getElementById('milestone-bar').style.width = pct + '%';
+          document.getElementById('milestone-label').innerText = `${data.current_streak}/${data.next_milestone}`;
           updateDictionaryList(data.dictionary || [], data.dictionary_score || 0);
           const spinBtn = document.getElementById('spin-btn');
           spinBtn.style.display = data.spin_available ? 'block' : 'none';
@@ -712,8 +748,8 @@
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {
-            if(data.new_achievements) {
-              data.new_achievements.forEach(a => showAchievement(a));
+            if(data.milestone_reward) {
+              showMilestoneReward(data.milestone_reward);
             }
             const spinBtn = document.getElementById('spin-btn');
             spinBtn.style.display = data.spin_available ? 'block' : 'none';
@@ -757,8 +793,8 @@
       .then(data => {
         achievements = data.achievements || [];
         updateAchievementsList();
-        if(data.new_achievements) {
-          data.new_achievements.forEach(a => showAchievement(a));
+        if(data.milestone_reward) {
+          showMilestoneReward(data.milestone_reward);
         }
         getData();
       });
