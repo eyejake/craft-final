@@ -10,7 +10,11 @@ users = {}
 LETTER_POOL_SIZE = 7
 
 ACHIEVEMENT_TOKEN_REWARD = 2
+=======
+
+ACHIEVEMENT_TOKEN_REWARD = 2
 MAX_TILES = 10
+
 
 VOWELS = ['A', 'E', 'I', 'O', 'U']
 MILESTONES = [3, 7, 21]
@@ -117,12 +121,15 @@ def apply_daily_login(user, date_key):
     else:
         user['spin_available'] = False
     return new_achievements, tokens_earned
+
+=======
 =======
     reward = None
     if user['current_streak'] in MILESTONES:
         reward = grant_milestone_reward(user)
 
     return reward
+
 
 
 
@@ -162,12 +169,18 @@ def login():
     if 'longest_word' not in user:
         user['longest_word'] = max(user.get('history', []), key=len, default='')
 
+c
+    new_achievements, earned = apply_daily_login(user, today_key)
+    if earned:
+        user['tokens'] += earned
+=======
 
     new_achievements, earned = apply_daily_login(user, today_key)
     if earned:
         user['tokens'] += earned
 =======
     milestone_reward = apply_daily_login(user, today_key)
+
 
 
     return jsonify({
@@ -211,7 +224,11 @@ def get_letters():
 
         "submissions_today": user['submissions_today']
 =======
+
+        "submissions_today": user['submissions_today']
+=======
         "next_milestone": next_milestone
+
 
     })
 
@@ -324,6 +341,8 @@ def spin_wheel():
     user['letters'].extend(new_tiles)
     tokens_won = random.randint(1, 3)
     user['tokens'] += tokens_won
+
+=======
 =======
     available_slots = MAX_TILES - len(user['letters'])
     new_tiles = []
@@ -331,6 +350,7 @@ def spin_wheel():
         tiles_to_add = min(random.randint(1, 3), available_slots)
         new_tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(tiles_to_add)]
         user['letters'].extend(new_tiles)
+
 
     user['spin_available'] = False
     user['last_spin_streak'] = user['current_streak']
@@ -354,7 +374,13 @@ def fast_forward_day():
     if earned:
         user['tokens'] += earned
 =======
+
+    new_achievements, earned = apply_daily_login(user, next_key)
+    if earned:
+        user['tokens'] += earned
+=======
     milestone_reward = apply_daily_login(user, next_key)
+
 
 
     return jsonify({
@@ -365,9 +391,12 @@ def fast_forward_day():
         "new_achievements": new_achievements,
         "spin_available": user.get('spin_available', False),
         "tokens": user['tokens']
+
+=======
 =======
         "milestone_reward": milestone_reward,
         "spin_available": user.get('spin_available', False)
+
 
     })
 
