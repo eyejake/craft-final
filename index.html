@@ -258,8 +258,11 @@
       margin-top: 4px;
     }
 
-    #token-display {
+    #token-section {
       cursor: pointer;
+    }
+
+    #token-display {
       text-decoration: underline;
     }
 
@@ -430,8 +433,8 @@
     <h1 id="game-title">WordForge</h1>
   </header>
   <div id="stat-bar">
-    <div id="token-section">🪙 <span id="token-display" onclick="openTokenModal()">0</span></div>
-    <div>Total Pts: <span id="total-score-display">0</span></div>
+    <div id="token-section" onclick="openTokenModal()">🪙 Tokens: <span id="token-display">0</span></div>
+    <div id="score-section">Total Pts: <span id="total-score-display">0</span></div>
     <div id="milestone-container">
       <div id="milestone-bar-container"><div id="milestone-bar"></div></div>
       <div id="milestone-label">0/3</div>
