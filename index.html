@@ -40,6 +40,7 @@
 
     #game-wrapper {
       width: 100%;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -72,10 +73,15 @@
       }
     }
 
-    #top-info {
+    #stat-bar {
+      width: 100%;
       display: flex;
-      gap: 10px;
+      justify-content: center;
+      gap: 30px;
       font-size: 0.9em;
+      font-weight: bold;
+      color: var(--gold);
+      padding: 6px 0;
     }
 
     #signin-btn {
@@ -138,8 +144,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-top: 70px;
-      min-height: calc(100vh - 70px);
+      margin-top: 110px;
+      min-height: calc(100vh - 110px);
     }
 
     #letters {
@@ -204,6 +210,25 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     button.submit:hover {
+      background: #cf711f;
+    }
+
+    #swap-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      font-size: 0.75em;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 12;
+    }
+    #swap-btn:hover {
       background: #cf711f;
     }
 
@@ -394,11 +419,11 @@
   <header>
     <button id="menu-toggle">&#9776;</button>
     <h1 id="game-title">WordForge</h1>
-    <div id="top-info">
-      <div>Tokens: <span id="token-display">0</span></div>
-      <div>Pts: <span id="daily-score">0</span></div>
-    </div>
   </header>
+  <div id="stat-bar">
+    <div>Tokens: <span id="token-display">0</span></div>
+    <div>Total Pts: <span id="total-score-display">0</span></div>
+  </div>
   <button id="signin-btn" onclick="openLoginModal()">Sign In</button>
   <button id="fast-forward-btn" onclick="fastForwardDay()" style="display:none; position: fixed; top: 50px; right: 10px; z-index:20;">Fast Forward One Day</button>
 
@@ -418,7 +443,6 @@
     </div>
     <input type="text" id="word" placeholder="Enter a word">
     <button id="submit-btn" class="submit" onclick="submitWord()">SUBMIT</button>
-    <button id="swap-btn" class="submit" onclick="swapLetters()">Swap Selected</button>
     <div id="wheel" style="display:none; margin:10px; width:80px; height:80px; border-radius:50%; border:4px solid var(--gold);"></div>
     <button id="spin-btn" class="submit" style="display:none;" onclick="spinWheel()">Spin</button>
     <div id="result"></div>
@@ -450,6 +474,7 @@
       </div>
     </div>
     </div>
+    <button id="swap-btn" onclick="swapLetters()">Swap</button>
   </div>
 
   <div id="login-modal">
@@ -689,7 +714,9 @@
 
     function loadStatsFromLocal() {
       document.getElementById('token-display').innerText = localStorage.getItem('tokens') || 0;
-      document.getElementById('total-score').innerText = localStorage.getItem('score') || 0;
+      const total = localStorage.getItem('score') || 0;
+      document.getElementById('total-score-display').innerText = total;
+      document.getElementById('total-score').innerText = total;
       document.getElementById('current-streak').innerText = localStorage.getItem('current_streak') || 0;
       document.getElementById('longest-streak').innerText = localStorage.getItem('longest_streak') || 0;
     }
@@ -721,6 +748,7 @@
             container.appendChild(span);
           });
           document.getElementById('token-display').innerText = data.tokens || 0;
+          document.getElementById('total-score-display').innerText = data.score || 0;
           document.getElementById('total-score').innerText = data.score || 0;
           document.getElementById('best-word').innerText = data.highest_score ? `${data.best_word} (+${data.highest_score})` : '–';
           document.getElementById('longest-word').innerText = data.longest_word || '–';
@@ -746,7 +774,7 @@
         .then(data => {
           if(data.status === 'success') {
             document.getElementById('token-display').innerText = data.tokens;
-            document.getElementById('daily-score').innerText = data.score;
+            document.getElementById('total-score-display').innerText = data.total_score;
             document.getElementById('total-score').innerText = data.total_score;
             updateLocalStats({tokens: data.tokens, score: data.total_score});
             document.getElementById('best-word').innerText = data.highest_score ? `${data.best_word} (+${data.highest_score})` : '–';
