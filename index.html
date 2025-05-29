@@ -665,6 +665,27 @@
       updateWordInput();
     }
 
+    function syncTilesWithInput() {
+      const word = document.getElementById('word').value.toUpperCase();
+      const tiles = Array.from(document.querySelectorAll('.tile'));
+      selectedTiles = [];
+      tiles.forEach(t => t.classList.remove('selected'));
+      const used = new Set();
+      for (let chIdx = 0; chIdx < word.length; chIdx++) {
+        const ch = word[chIdx];
+        for (let i = 0; i < tiles.length; i++) {
+          const tile = tiles[i];
+          const idx = parseInt(tile.getAttribute('data-index'));
+          if (!used.has(idx) && tile.innerText.toUpperCase() === ch) {
+            tile.classList.add('selected');
+            selectedTiles.push(idx);
+            used.add(idx);
+            break;
+          }
+        }
+      }
+    }
+
     function loadStatsFromLocal() {
       document.getElementById('token-display').innerText = localStorage.getItem('tokens') || 0;
       document.getElementById('total-score').innerText = localStorage.getItem('score') || 0;
@@ -793,6 +814,7 @@
     }
 
     loadStatsFromLocal();
+    document.getElementById('word').addEventListener('input', syncTilesWithInput);
     fetch('/login', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
