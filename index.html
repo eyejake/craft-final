@@ -17,17 +17,29 @@
       margin: 0;
       padding: 0;
       line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
 
     header {
-      position: sticky;
-      top: 0;
       background: #1f1f1f;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 12px 20px;
-      z-index: 10;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    #game-wrapper {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     #menu-toggle {
@@ -192,13 +204,24 @@
 
       #stats, #dictionary, #achievements {
         display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(4px);
+        justify-content: center;
+        align-items: center;
+        z-index: 25;
+      }
+      #stats .modal-content, #dictionary .modal-content, #achievements .modal-content {
         background: #1e1e1e;
         padding: 15px;
         border-radius: 10px;
-        position: relative;
-        width: 100%;
+        width: 90%;
         max-width: 350px;
-        margin-top: 20px;
+        position: relative;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       }
       #stats h3, #dictionary h3, #achievements h3 {
@@ -340,6 +363,7 @@
   </style>
 </head>
 <body>
+  <div id="game-wrapper">
   <header>
     <button id="menu-toggle">&#9776;</button>
     <h1 id="game-title">WordForge</h1>
@@ -367,27 +391,34 @@
     <button id="spin-btn" class="submit" style="display:none;" onclick="spinWheel()">Spin</button>
     <div id="result"></div>
     <div id="completed-screen"></div>
-    <div id="stats">
-      <span class="close-panel" onclick="closePanel('stats')">&times;</span>
-      <h3>STATS</h3>
-      <p>Total Score: <span id="total-score">0</span></p>
-      <p>Best Word: <span id="best-word">–</span></p>
-      <p>Longest Word: <span id="longest-word">–</span></p>
-      <p>Current Streak: <span id="current-streak">0</span></p>
-      <p>Longest Streak: <span id="longest-streak">0</span></p>
+    <div id="stats" class="modal">
+      <div class="modal-content">
+        <span class="close-panel" onclick="closePanel('stats')">&times;</span>
+        <h3>STATS</h3>
+        <p>Total Score: <span id="total-score">0</span></p>
+        <p>Best Word: <span id="best-word">–</span></p>
+        <p>Longest Word: <span id="longest-word">–</span></p>
+        <p>Current Streak: <span id="current-streak">0</span></p>
+        <p>Longest Streak: <span id="longest-streak">0</span></p>
+      </div>
     </div>
-      <div id="dictionary">
+    <div id="dictionary" class="modal">
+      <div class="modal-content">
         <span class="close-panel" onclick="closePanel('dictionary')">&times;</span>
         <h3>MY DICTIONARY</h3>
         <ul id="dictionary-list"></ul>
         <p id="dictionary-total"></p>
       </div>
-      <div id="achievements">
+    </div>
+    <div id="achievements" class="modal">
+      <div class="modal-content">
         <span class="close-panel" onclick="closePanel('achievements')">&times;</span>
         <h3>ACHIEVEMENTS</h3>
         <ul id="achievements-list"></ul>
       </div>
     </div>
+    </div>
+  </div>
 
   <div id="login-modal">
     <div class="modal-content">
@@ -487,15 +518,22 @@
       }
     });
 
-    function togglePanel(id) {
-      const el = document.getElementById(id);
-      el.style.display = el.style.display === 'block' ? 'none' : 'block';
-      document.getElementById('drawer').classList.remove('open');
-    }
+      function togglePanel(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        document.getElementById('drawer').classList.remove('open');
+      }
 
-    function closePanel(id) {
-      document.getElementById(id).style.display = 'none';
-    }
+      function closePanel(id) {
+        document.getElementById(id).style.display = 'none';
+      }
+
+      ['stats','dictionary','achievements'].forEach(id => {
+        const modal = document.getElementById(id);
+        modal.addEventListener('click', (e) => {
+          if(e.target === modal) closePanel(id);
+        });
+      });
 
     document.getElementById('menu-toggle').addEventListener('click', () => {
       document.getElementById('drawer').classList.toggle('open');
