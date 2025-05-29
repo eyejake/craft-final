@@ -8,8 +8,10 @@ app = Flask(__name__, static_folder=".")
 
 users = {}
 LETTER_POOL_SIZE = 7
-# Maximum number of tiles a player can hold
+
+ACHIEVEMENT_TOKEN_REWARD = 2
 MAX_TILES = 10
+
 VOWELS = ['A', 'E', 'I', 'O', 'U']
 MILESTONES = [3, 7, 21]
 
@@ -85,6 +87,7 @@ def apply_daily_login(user, date_key):
 
         user['date'] = date_key
         user['last_submission'] = None
+        user['submissions_today'] = 0
 
     today = datetime.strptime(date_key, '%Y-%m-%d').date()
     if user['last_login']:
@@ -100,11 +103,27 @@ def apply_daily_login(user, date_key):
     user['last_login'] = date_key
     user['login_days'].add(date_key)
 
+
+    new_achievements = []
+    tokens_earned = 0
+    if user['current_streak'] >= 3 and "Logged in 3 days in a row" not in user['achievements']:
+        user['achievements'].append("Logged in 3 days in a row")
+        new_achievements.append("Logged in 3 days in a row")
+        tokens_earned += ACHIEVEMENT_TOKEN_REWARD
+
+    if user['current_streak'] >= 3:
+        if user['current_streak'] % 3 == 0 and user.get('last_spin_streak', 0) != user['current_streak']:
+            user['spin_available'] = True
+    else:
+        user['spin_available'] = False
+    return new_achievements, tokens_earned
+=======
     reward = None
     if user['current_streak'] in MILESTONES:
         reward = grant_milestone_reward(user)
 
     return reward
+
 
 
 @app.route('/')
@@ -123,6 +142,7 @@ def login():
             'dictionary': [],  # store unique submitted words with scores
             'date': today_key,
             'last_submission': None,
+            'submissions_today': 0,
             'tokens': 10,
             'score': 0,
             'highest_score': 0,
@@ -142,11 +162,18 @@ def login():
     if 'longest_word' not in user:
         user['longest_word'] = max(user.get('history', []), key=len, default='')
 
+
+    new_achievements, earned = apply_daily_login(user, today_key)
+    if earned:
+        user['tokens'] += earned
+=======
     milestone_reward = apply_daily_login(user, today_key)
+
 
     return jsonify({
         "status": "success",
         "username": username,
+        "tokens": user['tokens'],
         "achievements": user['achievements'],
         "milestone_reward": milestone_reward
     })
@@ -160,7 +187,7 @@ def get_letters():
         return jsonify({"status": "error", "message": "User not found"}), 404
 
     today_key = datetime.utcnow().strftime('%Y-%m-%d')
-    submitted_today = user.get('last_submission') == today_key
+    submitted_today = user['date'] == today_key and user['submissions_today'] > 0
     last_word = user['history'][-1] if submitted_today and user['history'] else ''
     last_score = calculate_word_score(last_word) if last_word else 0
     next_milestone = next((m for m in MILESTONES if user['current_streak'] < m), MILESTONES[-1])
@@ -181,7 +208,11 @@ def get_letters():
         "last_word": last_word,
         "last_word_score": last_score,
         "spin_available": user.get('spin_available', False),
+
+        "submissions_today": user['submissions_today']
+=======
         "next_milestone": next_milestone
+
     })
 
 
@@ -196,10 +227,18 @@ def submit_word():
     if not user:
         return jsonify({"status": "error", "message": "User not found"}), 404
 
-    if user.get('last_submission') == today_key:
-        return jsonify({"status": "fail", "message": "You've already submitted a word today."})
+    if user['date'] != today_key:
+        daily_achievements, earned = apply_daily_login(user, today_key)
+        if earned:
+            user['tokens'] += earned
+
+    cost = user['submissions_today'] + 1
+    if user['tokens'] < cost:
+        return jsonify({"status": "fail", "message": "Not enough tokens"})
 
     new_achievements = []
+    if user['date'] != today_key:
+        new_achievements.extend(daily_achievements)
     first_word = len(user['history']) == 0
 
     letters_copy = user['letters'][:]
@@ -217,7 +256,7 @@ def submit_word():
     if not any(entry['word'] == word for entry in user['dictionary']):
         user['dictionary'].append({"word": word, "score": score})
     user['last_submission'] = today_key
-    user['tokens'] += 1
+    user['tokens'] -= cost
     if len(word) == LETTER_POOL_SIZE:
         user['tokens'] += 3
 
@@ -228,20 +267,27 @@ def submit_word():
     if len(word) > len(user['longest_word']):
         user['longest_word'] = word
 
+    tokens_from_achievements = 0
     if first_word and "First word submitted" not in user['achievements']:
         user['achievements'].append("First word submitted")
         new_achievements.append("First word submitted")
+        tokens_from_achievements += ACHIEVEMENT_TOKEN_REWARD
     if score >= 10 and "Scored 10+ points in a word" not in user['achievements']:
         user['achievements'].append("Scored 10+ points in a word")
         new_achievements.append("Scored 10+ points in a word")
+        tokens_from_achievements += ACHIEVEMENT_TOKEN_REWARD
     if len(word) == LETTER_POOL_SIZE and "Used all 7 letters" not in user['achievements']:
         user['achievements'].append("Used all 7 letters")
         new_achievements.append("Used all 7 letters")
+        tokens_from_achievements += ACHIEVEMENT_TOKEN_REWARD
 
     if len(word) == len(user['letters']):
         user['letters'] = get_seeded_letters(today_key)
     else:
         user['letters'] = letters_copy
+
+    user['tokens'] += tokens_from_achievements
+    user['submissions_today'] += 1
 
     result = {
         "status": "success",
@@ -272,16 +318,24 @@ def spin_wheel():
     if not user.get('spin_available'):
         return jsonify({"status": "fail", "message": "Spin not available"})
 
+
+    tiles_to_add = random.randint(1, 3)
+    new_tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(tiles_to_add)]
+    user['letters'].extend(new_tiles)
+    tokens_won = random.randint(1, 3)
+    user['tokens'] += tokens_won
+=======
     available_slots = MAX_TILES - len(user['letters'])
     new_tiles = []
     if available_slots > 0:
         tiles_to_add = min(random.randint(1, 3), available_slots)
         new_tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(tiles_to_add)]
         user['letters'].extend(new_tiles)
+
     user['spin_available'] = False
     user['last_spin_streak'] = user['current_streak']
 
-    return jsonify({"status": "success", "new_tiles": new_tiles, "letters": user['letters']})
+    return jsonify({"status": "success", "new_tiles": new_tiles, "tokens": user['tokens'], "tokens_won": tokens_won, "letters": user['letters']})
 
 
 @app.route('/fast-forward-day', methods=['POST'])
@@ -295,14 +349,26 @@ def fast_forward_day():
     next_day = current_date + timedelta(days=1)
     next_key = next_day.strftime('%Y-%m-%d')
 
+
+    new_achievements, earned = apply_daily_login(user, next_key)
+    if earned:
+        user['tokens'] += earned
+=======
     milestone_reward = apply_daily_login(user, next_key)
+
 
     return jsonify({
         "status": "success",
         "letters": user['letters'],
         "date": next_key,
+
+        "new_achievements": new_achievements,
+        "spin_available": user.get('spin_available', False),
+        "tokens": user['tokens']
+=======
         "milestone_reward": milestone_reward,
         "spin_available": user.get('spin_available', False)
+
     })
 
 
