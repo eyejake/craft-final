@@ -48,9 +48,11 @@ def calculate_word_score(word):
 def apply_daily_login(user, date_key):
     """Apply daily login logic for the given date."""
     if user['date'] != date_key:
-        if len(user['history']) == 0:
+        # Only seed a full rack on the very first login
+        if user.get('last_login') is None:
             user['letters'] = get_seeded_letters(date_key)
         else:
+            # Subsequent days grant a single new tile
             user['letters'].append(random.choice(SCRABBLE_LETTER_POOL))
         user['date'] = date_key
         user['last_submission'] = None
