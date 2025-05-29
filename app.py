@@ -396,6 +396,33 @@ def swap_letters():
 
     return jsonify({"status": "success", "letters": user['letters'], "tokens": user['tokens']})
 
+@app.route('/buy-tiles', methods=['POST'])
+def buy_tiles():
+    data = request.json
+    username = data.get('username')
+    count = int(data.get('count', 0))
+    user = users.get(username)
+    if not user:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    if count <= 0:
+        return jsonify({"status": "fail", "message": "Invalid tile count"})
+
+    available_slots = MAX_TILES - len(user['letters'])
+    if count > available_slots:
+        return jsonify({"status": "fail", "message": "Rack cannot hold that many tiles"})
+
+    cost = count * 2
+    if user['tokens'] < cost:
+        return jsonify({"status": "fail", "message": "Not enough tokens"})
+
+    user['tokens'] -= cost
+    user['tokens_spent'] += cost
+    new_tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(count)]
+    user['letters'].extend(new_tiles)
+
+    return jsonify({"status": "success", "letters": user['letters'], "tokens": user['tokens'], "new_tiles": new_tiles})
+
 @app.route('/fast-forward-day', methods=['POST'])
 def fast_forward_day():
     username = request.json.get('username')
