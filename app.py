@@ -8,6 +8,8 @@ app = Flask(__name__, static_folder=".")
 
 users = {}
 LETTER_POOL_SIZE = 7
+# Maximum number of tiles a player can hold
+MAX_TILES = 10
 VOWELS = ['A', 'E', 'I', 'O', 'U']
 
 LETTER_POINTS = {
@@ -51,7 +53,8 @@ def apply_daily_login(user, date_key):
         if len(user['history']) == 0:
             user['letters'] = get_seeded_letters(date_key)
         else:
-            user['letters'].append(random.choice(SCRABBLE_LETTER_POOL))
+            if len(user['letters']) < MAX_TILES:
+                user['letters'].append(random.choice(SCRABBLE_LETTER_POOL))
         user['date'] = date_key
         user['last_submission'] = None
 
@@ -245,9 +248,12 @@ def spin_wheel():
     if not user.get('spin_available'):
         return jsonify({"status": "fail", "message": "Spin not available"})
 
-    tiles_to_add = random.randint(1, 3)
-    new_tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(tiles_to_add)]
-    user['letters'].extend(new_tiles)
+    available_slots = MAX_TILES - len(user['letters'])
+    new_tiles = []
+    if available_slots > 0:
+        tiles_to_add = min(random.randint(1, 3), available_slots)
+        new_tiles = [random.choice(SCRABBLE_LETTER_POOL) for _ in range(tiles_to_add)]
+        user['letters'].extend(new_tiles)
     user['spin_available'] = False
     user['last_spin_streak'] = user['current_streak']
 
