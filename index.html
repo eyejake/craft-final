@@ -17,17 +17,29 @@
       margin: 0;
       padding: 0;
       line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
 
     header {
-      position: sticky;
-      top: 0;
       background: #1f1f1f;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 12px 20px;
-      z-index: 10;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    #game-wrapper {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     #menu-toggle {
@@ -37,6 +49,24 @@
       font-size: 1.5em;
       color: #fff;
       cursor: pointer;
+    }
+
+    #game-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
+      font-size: 1.4em;
+      font-weight: bold;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      color: var(--gold);
+      pointer-events: none;
+    }
+
+    @media (min-width: 600px) {
+      #game-title {
+        left: 55%;
+      }
     }
 
     #top-info {
@@ -118,7 +148,8 @@
     .tile {
       background: var(--teal);
       color: #001f3f;
-      padding: 15px 20px;
+      width: 60px;
+      height: 60px;
       border-radius: 12px;
       position: relative;
       font-weight: bold;
@@ -126,6 +157,9 @@
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .tile:active {
       transform: scale(0.96);
@@ -168,15 +202,48 @@
       background: #cf711f;
     }
 
+    #milestone-container {
+      width: 100%;
+      max-width: 350px;
+      margin: 10px auto;
+    }
+    #milestone-bar-container {
+      background: #333;
+      height: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #milestone-bar {
+      background: var(--gold);
+      height: 100%;
+      width: 0%;
+    }
+    #milestone-label {
+      text-align: center;
+      font-size: 0.9em;
+      margin-top: 4px;
+    }
+
       #stats, #dictionary, #achievements {
         display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(4px);
+        justify-content: center;
+        align-items: center;
+        z-index: 25;
+      }
+      #stats .modal-content, #dictionary .modal-content, #achievements .modal-content {
         background: #1e1e1e;
         padding: 15px;
         border-radius: 10px;
-        position: relative;
-        width: 100%;
+        width: 90%;
         max-width: 350px;
-        margin-top: 20px;
+        position: relative;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       }
       #stats h3, #dictionary h3, #achievements h3 {
@@ -318,8 +385,10 @@
   </style>
 </head>
 <body>
+  <div id="game-wrapper">
   <header>
     <button id="menu-toggle">&#9776;</button>
+    <h1 id="game-title">WordForge</h1>
     <div id="top-info">
       <div id="token-display">0</div>
       <div>Pts: <span id="daily-score">0</span></div>
@@ -338,33 +407,44 @@
 
   <div id="content">
     <div id="letters"></div>
+    <div id="milestone-container">
+      <div id="milestone-bar-container"><div id="milestone-bar"></div></div>
+      <div id="milestone-label">0/3</div>
+    </div>
     <input type="text" id="word" placeholder="Enter a word">
     <button id="submit-btn" class="submit" onclick="submitWord()">SUBMIT</button>
     <div id="wheel" style="display:none; margin:10px; width:80px; height:80px; border-radius:50%; border:4px solid var(--gold);"></div>
     <button id="spin-btn" class="submit" style="display:none;" onclick="spinWheel()">Spin</button>
     <div id="result"></div>
     <div id="completed-screen"></div>
-    <div id="stats">
-      <span class="close-panel" onclick="closePanel('stats')">&times;</span>
-      <h3>STATS</h3>
-      <p>Total Score: <span id="total-score">0</span></p>
-      <p>Best Word: <span id="best-word">–</span></p>
-      <p>Longest Word: <span id="longest-word">–</span></p>
-      <p>Current Streak: <span id="current-streak">0</span></p>
-      <p>Longest Streak: <span id="longest-streak">0</span></p>
+    <div id="stats" class="modal">
+      <div class="modal-content">
+        <span class="close-panel" onclick="closePanel('stats')">&times;</span>
+        <h3>STATS</h3>
+        <p>Total Score: <span id="total-score">0</span></p>
+        <p>Best Word: <span id="best-word">–</span></p>
+        <p>Longest Word: <span id="longest-word">–</span></p>
+        <p>Current Streak: <span id="current-streak">0</span></p>
+        <p>Longest Streak: <span id="longest-streak">0</span></p>
+      </div>
     </div>
-      <div id="dictionary">
+    <div id="dictionary" class="modal">
+      <div class="modal-content">
         <span class="close-panel" onclick="closePanel('dictionary')">&times;</span>
         <h3>MY DICTIONARY</h3>
         <ul id="dictionary-list"></ul>
         <p id="dictionary-total"></p>
       </div>
-      <div id="achievements">
+    </div>
+    <div id="achievements" class="modal">
+      <div class="modal-content">
         <span class="close-panel" onclick="closePanel('achievements')">&times;</span>
         <h3>ACHIEVEMENTS</h3>
         <ul id="achievements-list"></ul>
       </div>
     </div>
+    </div>
+  </div>
 
   <div id="login-modal">
     <div class="modal-content">
@@ -464,15 +544,22 @@
       }
     });
 
-    function togglePanel(id) {
-      const el = document.getElementById(id);
-      el.style.display = el.style.display === 'block' ? 'none' : 'block';
-      document.getElementById('drawer').classList.remove('open');
-    }
+      function togglePanel(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        document.getElementById('drawer').classList.remove('open');
+      }
 
-    function closePanel(id) {
-      document.getElementById(id).style.display = 'none';
-    }
+      function closePanel(id) {
+        document.getElementById(id).style.display = 'none';
+      }
+
+      ['stats','dictionary','achievements'].forEach(id => {
+        const modal = document.getElementById(id);
+        modal.addEventListener('click', (e) => {
+          if(e.target === modal) closePanel(id);
+        });
+      });
 
     document.getElementById('menu-toggle').addEventListener('click', () => {
       document.getElementById('drawer').classList.toggle('open');
@@ -500,6 +587,13 @@
         toast.innerText = `Achievement Unlocked: ${name}!`;
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 2000);
+      }
+
+      function showMilestoneReward(reward) {
+        let msg = `Milestone ${reward.milestone} reached!`;
+        if(reward.tiles) msg += ` +${reward.tiles.length} tile${reward.tiles.length>1?'s':''}`;
+        if(reward.tokens) msg += ` +${reward.tokens} tokens`;
+        showMessage(msg);
       }
 
       function updateAchievementsList() {
@@ -605,6 +699,9 @@
           document.getElementById('longest-word').innerText = data.longest_word || '–';
           document.getElementById('current-streak').innerText = data.current_streak || 0;
           document.getElementById('longest-streak').innerText = data.longest_streak || 0;
+          const pct = Math.min((data.current_streak / data.next_milestone) * 100, 100);
+          document.getElementById('milestone-bar').style.width = pct + '%';
+          document.getElementById('milestone-label').innerText = `${data.current_streak}/${data.next_milestone}`;
           updateDictionaryList(data.dictionary || [], data.dictionary_score || 0);
           const spinBtn = document.getElementById('spin-btn');
           spinBtn.style.display = data.spin_available ? 'block' : 'none';
@@ -651,12 +748,13 @@
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {
-            if(data.new_achievements) {
-              data.new_achievements.forEach(a => showAchievement(a));
+            if(data.milestone_reward) {
+              showMilestoneReward(data.milestone_reward);
             }
             const spinBtn = document.getElementById('spin-btn');
             spinBtn.style.display = data.spin_available ? 'block' : 'none';
             getData();
+            location.reload();
           } else {
             showMessage(data.message || 'Error');
           }
@@ -695,8 +793,8 @@
       .then(data => {
         achievements = data.achievements || [];
         updateAchievementsList();
-        if(data.new_achievements) {
-          data.new_achievements.forEach(a => showAchievement(a));
+        if(data.milestone_reward) {
+          showMilestoneReward(data.milestone_reward);
         }
         getData();
       });
