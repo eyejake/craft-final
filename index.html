@@ -676,6 +676,7 @@
             const spinBtn = document.getElementById('spin-btn');
             spinBtn.style.display = data.spin_available ? 'block' : 'none';
             getData();
+            location.reload();
           } else {
             showMessage(data.message || 'Error');
           }
