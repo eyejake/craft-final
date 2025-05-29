@@ -418,6 +418,7 @@
     </div>
     <input type="text" id="word" placeholder="Enter a word">
     <button id="submit-btn" class="submit" onclick="submitWord()">SUBMIT</button>
+    <button id="swap-btn" class="submit" onclick="swapLetters()">Swap Selected</button>
     <div id="wheel" style="display:none; margin:10px; width:80px; height:80px; border-radius:50%; border:4px solid var(--gold);"></div>
     <button id="spin-btn" class="submit" style="display:none;" onclick="spinWheel()">Spin</button>
     <div id="result"></div>
@@ -763,6 +764,34 @@
           showMessage(data.message);
         }
       });
+    }
+
+  function swapLetters() {
+      const letters = selectedTiles.map(i => {
+        const tile = document.querySelector(`.tile[data-index='${i}']`);
+        return tile ? tile.innerText : '';
+      });
+      if(letters.length === 0) {
+        showMessage('Select letters to swap');
+        return;
+      }
+      fetch('/swap-letters', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username, letters})
+      })
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') {
+            document.getElementById('token-display').innerText = data.tokens;
+            updateLocalStats({tokens: data.tokens});
+            selectedTiles = [];
+            document.getElementById('word').value = '';
+            getData();
+          } else {
+            showMessage(data.message || 'Swap failed');
+          }
+        });
     }
 
   function fastForwardDay() {

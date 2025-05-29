@@ -304,6 +304,35 @@ def spin_wheel():
 
     return jsonify({"status": "success", "new_tiles": new_tiles, "tokens": user['tokens'], "tokens_won": tokens_won, "letters": user['letters']})
 
+
+@app.route('/swap-letters', methods=['POST'])
+def swap_letters():
+    data = request.json
+    username = data.get('username')
+    letters = data.get('letters', [])
+    user = users.get(username)
+    if not user:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    letters_upper = [str(l).upper() for l in letters]
+    letters_copy = user['letters'][:]
+    indices_to_swap = []
+    for l in letters_upper:
+        if l in letters_copy:
+            idx = letters_copy.index(l)
+            indices_to_swap.append(idx)
+            letters_copy[idx] = None
+
+    cost = len(indices_to_swap) * 2
+    if user['tokens'] < cost:
+        return jsonify({"status": "fail", "message": "Not enough tokens"})
+
+    user['tokens'] -= cost
+    for idx in indices_to_swap:
+        user['letters'][idx] = random.choice(SCRABBLE_LETTER_POOL)
+
+    return jsonify({"status": "success", "letters": user['letters'], "tokens": user['tokens']})
+
 @app.route('/fast-forward-day', methods=['POST'])
 def fast_forward_day():
     username = request.json.get('username')
