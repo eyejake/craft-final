@@ -225,24 +225,52 @@
       background: #cf711f;
     }
 
-    #swap-btn {
+    .fab-container {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 40px;
-      height: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      z-index: 15;
+    }
+    #fab-main {
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       background: var(--orange);
       color: #fff;
       border: none;
-      font-size: 0.75em;
+      font-size: 1.2em;
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      z-index: 12;
     }
-    #swap-btn:hover {
-      background: #cf711f;
+    .fab-options {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 10px;
     }
+    .fab-container:hover .fab-options,
+    .fab-container.show .fab-options {
+      display: flex;
+    }
+    .fab-option {
+      width: 160px;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 1em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #fab-swap { background: var(--orange); }
+    #fab-buy { background: var(--teal); }
+    #fab-convert { background: var(--gold); color: #000; }
 
     #milestone-container {
       flex: 1;
@@ -494,7 +522,14 @@
       </div>
     </div>
     </div>
-    <button id="swap-btn" onclick="swapLetters()">Swap</button>
+    <div class="fab-container" id="fab">
+      <div class="fab-options">
+        <button id="fab-swap" class="fab-option" onclick="swapLetters()">🔄 Swap Tiles</button>
+        <button id="fab-buy" class="fab-option" onclick="buyTiles()">🛒 Buy Tiles</button>
+        <button id="fab-convert" class="fab-option" onclick="convertPoints()">💱 Convert Points</button>
+      </div>
+      <button id="fab-main">☰</button>
+    </div>
   </div>
 
   <div id="login-modal">
@@ -850,6 +885,14 @@
           }
         });
     }
+
+  function buyTiles() {
+      showMessage('Buy Tiles coming soon');
+  }
+
+  function convertPoints() {
+      showMessage('Convert Points coming soon');
+  }
 
   function fastForwardDay() {
       fetch('/fast-forward-day', {
